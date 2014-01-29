@@ -15,9 +15,9 @@ class SearchServerClient(port : Int, id: Int) {
     .hostConnectionLimit(1)
     .build()
 
-  def queryPath(path: String, key: String, value: String): String = {
+  def queryPath(path: String, kvs: (String, String)*): String = {
     val encoder = new QueryStringEncoder(path)
-    encoder.addParam(key, value)
+    kvs.foreach { case (key, value) => encoder.addParam(key, value) }
     encoder.toString
   }
 
@@ -29,11 +29,11 @@ class SearchServerClient(port : Int, id: Int) {
     executeRequest("/isIndexed", HttpMethod.GET)
   }
   def query(q: String) = {
-    executeRequest(queryPath("/", "q", q), HttpMethod.GET)
+    executeRequest(queryPath("/", ("q", q)), HttpMethod.GET)
   }
 
   def index(path : String) = {
-    executeRequest(queryPath("/index", "path", path), HttpMethod.GET)
+    executeRequest(queryPath("/index", ("path", path)), HttpMethod.GET)
   }
 
   def executeRequest(path: String, method : HttpMethod) = {
