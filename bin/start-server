@@ -8,7 +8,7 @@ sbt_path="$(dirname "$0")/../dependencies/sbt"
 if [ -f "$jar_path" ]; then
   echo "$0: $jar_path is built; running the jar"
   set -x
-  exec java -DFile.encoding=UTF8 -DUser.timezone=UTC -Xmx256m -jar "$jar_path" "--server" "$@"
+  exec java -DFile.encoding=UTF8 -DUser.timezone=UTC -Xmx500m -jar "$jar_path" "--server" "$@"
 else
   echo "$0: $jar_path is not built"
   echo "$0: starting processes with SBT"
