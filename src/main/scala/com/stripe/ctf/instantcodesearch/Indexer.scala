@@ -15,12 +15,19 @@ import com.twitter.util.{Future, FuturePool}
 
 class Indexer {
   val indexBroker = new Broker[(String, String)]()
-  def isIndexed = true
+
+  val currentlyProcessing = collection.mutable.Set.empty[Int]
+  def isIndexed = { println(currentlyProcessing); currentlyProcessing.isEmpty }
+
+  val ngrams = collection.mutable.Map.empty[Set[String], String]
+  val files = collection.mutable.Map.empty[String, Seq[String]]
 
   def buildProcessor(id: Int) {
     indexBroker.recv.sync() map { case (abspath: String, relpath: String) =>
       FuturePool.unboundedPool {
-        println(s"$id: Index $abspath")
+        currentlyProcessing += id
+        process(abspath, relpath)
+        currentlyProcessing -= id
       } map { _ => buildProcessor(id) }
     }
   }
@@ -30,6 +37,27 @@ class Indexer {
   val decoder = Charset.forName("UTF-8").newDecoder()
   decoder onMalformedInput CodingErrorAction.REPORT
   decoder onUnmappableCharacter CodingErrorAction.REPORT
+
+  def process(abspath: String, relpath: String) {
+    val bytes = io.Source.fromFile(new java.io.File(abspath)).mkString.getBytes
+    if (Arrays.asList(bytes).indexOf(0) > 0)
+      return
+
+    try {
+      val r = new InputStreamReader(new ByteArrayInputStream(bytes), decoder)
+      val strContents = slurp(r)
+      val lines = strContents.split("\n")
+
+      files(relpath) = lines
+      ngrams(strContents.sliding(3).toSet) = relpath
+
+      //idx.addFile(relpath, strContents)
+    } catch {
+      case e: IOException => {
+        return
+      }
+    }
+  }
 
   def indexFile(abspath: String, relpath: String): Indexer = {
 
