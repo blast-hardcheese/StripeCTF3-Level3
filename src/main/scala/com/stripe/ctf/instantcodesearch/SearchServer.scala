@@ -29,7 +29,7 @@ class SearchServer(port : Int, id : Int) extends AbstractSearchServer(port, id) 
 
   def indexFile(abspath: String, relpath: String) = {
     FuturePool.unboundedPool {
-      System.err.println("[node #" + id + "] Indexing path: " + abspath)
+//      System.err.println("[node #" + id + "] Indexing path: " + abspath)
       indexer.indexFile(abspath, relpath)
     }
 
@@ -37,7 +37,7 @@ class SearchServer(port : Int, id : Int) extends AbstractSearchServer(port, id) 
   }
 
   override def query(q: String) = {
-    System.err.println("[node #" + id + "] Searching for: " + q)
+//    System.err.println("[node #" + id + "] Searching for: " + q)
     handleSearch(q)
   }
 
