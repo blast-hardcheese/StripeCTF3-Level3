@@ -53,13 +53,18 @@ class SearchMasterServer(port: Int, id: Int) extends AbstractSearchServer(port, 
     }
   }
 
+  val walker = new Walker
+  @volatile var rri = 0
   override def index(path: String) = {
     System.err.println(
       "[master] Requesting " + NumNodes + " nodes to index path: " + path
     )
+    val futures = walker.walk(path, { (abspath, relpath) =>
+      rri = (rri + 1) % NumNodes
+      clients(rri).index(path)
+    })
 
-    val responses = Future.collect(clients.map {client => client.index(path)})
-    responses.map {_ => successResponse()}
+    Future.collect(futures.toList).map { _ => successResponse() }
   }
 
   override def query(q: String) = {
