@@ -16,7 +16,7 @@ import com.twitter.util.{Future, FuturePool}
 class Indexer {
   val indexBroker = new Broker[(String, String)]()
 
-  val currentlyProcessing = collection.mutable.Set.empty[Int]
+  @volatile var currentlyProcessing = Set.empty[Int]
   def isIndexed = { println(currentlyProcessing); currentlyProcessing.isEmpty }
 
   val ngrams = collection.mutable.Map.empty[Set[String], String]
@@ -24,10 +24,11 @@ class Indexer {
 
   def buildProcessor(id: Int) {
     indexBroker.recv.sync() map { case (abspath: String, relpath: String) =>
+      currentlyProcessing = currentlyProcessing - id
       FuturePool.unboundedPool {
-        currentlyProcessing += id
+        currentlyProcessing = currentlyProcessing + id
         process(abspath, relpath)
-        currentlyProcessing -= id
+        currentlyProcessing = currentlyProcessing - id
       } map { _ => buildProcessor(id) }
     }
   }
