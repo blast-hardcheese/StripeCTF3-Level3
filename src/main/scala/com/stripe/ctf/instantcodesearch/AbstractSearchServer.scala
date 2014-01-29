@@ -18,6 +18,7 @@ import scala.collection.mutable.Buffer
 abstract class AbstractSearchServer(port: Int, id: Int) extends TwitterServer {
   def query(q: String): Future[HttpResponse]
   def index(path: String): Future[HttpResponse]
+  def indexFile(abspath: String, relpath: String): Future[HttpResponse]
   def healthcheck(): Future[HttpResponse]
   def isIndexed(): Future[HttpResponse]
 
@@ -28,6 +29,7 @@ abstract class AbstractSearchServer(port: Int, id: Int) extends TwitterServer {
     try {
       decoder.getPath() match {
         case "/index" => index(getParam(params, "path"))
+        case "/indexFile" => indexFile(getParam(params, "abspath"), getParam(params, "relpath"))
         case "/" => query(getParam(params, "q"))
         case "/healthcheck" => healthcheck()
         case "/isIndexed" => isIndexed()

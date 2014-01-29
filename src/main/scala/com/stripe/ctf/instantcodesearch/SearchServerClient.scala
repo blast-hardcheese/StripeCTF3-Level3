@@ -36,6 +36,10 @@ class SearchServerClient(port : Int, id: Int) {
     executeRequest(queryPath("/index", ("path", path)), HttpMethod.GET)
   }
 
+  def indexFile(abspath : String, relpath: String) = {
+    executeRequest(queryPath("/indexFile", ("abspath", abspath), ("relpath", relpath)), HttpMethod.GET)
+  }
+
   def executeRequest(path: String, method : HttpMethod) = {
     val request = new DefaultHttpRequest(
       HttpVersion.HTTP_1_1, method, path)

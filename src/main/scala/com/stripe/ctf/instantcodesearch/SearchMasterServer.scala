@@ -55,17 +55,23 @@ class SearchMasterServer(port: Int, id: Int) extends AbstractSearchServer(port, 
 
   val walker = new Walker
   @volatile var rri = 0
-  override def index(path: String) = {
+
+  def index(path: String) = {
     System.err.println(
       "[master] Requesting " + NumNodes + " nodes to index path: " + path
     )
     val futures = walker.walk(path, { (abspath, relpath) =>
       rri = (rri + 1) % NumNodes
-      clients(rri).index(path)
+      clients(rri).indexFile(abspath, relpath)
     })
 
     Future.collect(futures.toList).map { _ => successResponse() }
   }
+
+  def indexFile(abspath: String, relpath: String) = {
+    Future.value(errorResponse(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Index not supported, use indexFile instead"))
+  }
+
 
   override def query(q: String) = {
     val responses = clients.map {client => client.query(q)}
