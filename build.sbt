@@ -12,6 +12,8 @@ libraryDependencies += "com.twitter" %% "finagle-stream" % "6.5.2"
 
 libraryDependencies += "org.rogach" %% "scallop" % "0.9.4"
 
+libraryDependencies += "io.argonaut" %% "argonaut" % "6.0.2"
+
 assemblySettings
 
 jarName in assembly := "level3.jar"

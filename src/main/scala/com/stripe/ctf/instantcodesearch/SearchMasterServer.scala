@@ -1,8 +1,18 @@
 package com.stripe.ctf.instantcodesearch
 
 import com.twitter.util.Future
-import org.jboss.netty.handler.codec.http.HttpResponseStatus
+import org.jboss.netty.handler.codec.http.{HttpResponse,HttpHeaders,HttpResponseStatus}
 import org.jboss.netty.util.CharsetUtil.UTF_8
+
+import argonaut._
+import Argonaut._
+
+case class JsonResponse(success: Boolean, results: Option[List[String]])
+object Json {
+  implicit def JsonResponseCodecJson =
+    casecodec2(JsonResponse.apply, JsonResponse.unapply)("success", "results")
+}
+import Json.JsonResponseCodecJson
 
 class SearchMasterServer(port: Int, id: Int) extends AbstractSearchServer(port, id) {
   val NumNodes = 3
@@ -72,8 +82,12 @@ class SearchMasterServer(port: Int, id: Int) extends AbstractSearchServer(port, 
     Future.value(errorResponse(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Index not supported, use indexFile instead"))
   }
 
+  def query(q: String) = {
+    val futureResponses: Future[Seq[HttpResponse]] = Future.collect(clients.map {client => client.query(q)})
+    var futureJsonResponses: Future[Seq[JsonResponse]] = futureResponses.map({ responses: Seq[HttpResponse] =>
+      responses.map( r => r.getContent.toString(UTF_8).decodeOption[JsonResponse] ).flatten
+    })
 
-  override def query(q: String) = {
     val responses = clients.map {client => client.query(q)}
     responses(0)
   }
