@@ -8,14 +8,14 @@ class SearchServer(port : Int, id : Int) extends AbstractSearchServer(port, id) 
   val IndexPath = "instantcodesearch-" + id + ".index"
   case class Query(q : String, broker : Broker[SearchResult])
   lazy val searcher = new Searcher(IndexPath)
-  @volatile var indexed = false
+  val indexer = new Indexer
 
   override def healthcheck() = {
     Future.value(successResponse())
   }
 
   override def isIndexed() = {
-    if (indexed) {
+    if (indexer.isIndexed) {
       Future.value(successResponse())
     }
     else {
@@ -30,6 +30,7 @@ class SearchServer(port : Int, id : Int) extends AbstractSearchServer(port, id) 
   def indexFile(abspath: String, relpath: String) = {
     FuturePool.unboundedPool {
       System.err.println("[node #" + id + "] Indexing path: " + abspath)
+      indexer.indexFile(abspath, relpath)
     }
 
     Future.value(successResponse())
