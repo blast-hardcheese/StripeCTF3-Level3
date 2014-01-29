@@ -82,13 +82,24 @@ class SearchMasterServer(port: Int, id: Int) extends AbstractSearchServer(port, 
     Future.value(errorResponse(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Index not supported, use indexFile instead"))
   }
 
+  def jsonResponseToHttpResponse(json: JsonResponse): HttpResponse =
+    httpResponse(json.asJson.toString, HttpResponseStatus.OK)
+
   def query(q: String) = {
     val futureResponses: Future[Seq[HttpResponse]] = Future.collect(clients.map {client => client.query(q)})
     var futureJsonResponses: Future[Seq[JsonResponse]] = futureResponses.map({ responses: Seq[HttpResponse] =>
       responses.map( r => r.getContent.toString(UTF_8).decodeOption[JsonResponse] ).flatten
     })
 
-    val responses = clients.map {client => client.query(q)}
-    responses(0)
+    futureJsonResponses.map( responses =>
+      responses.foldLeft(JsonResponse(false, None))({
+        case (JsonResponse(_, None), next) => next
+        case (JsonResponse(true, Some(files)), JsonResponse(true, Some(nextFiles))) => JsonResponse(true, Some( (files ::: nextFiles) ))
+        case (a, _) => a
+      })
+    ).map({
+      case JsonResponse(true, Some(files)) => JsonResponse(true, Some(files.toSet.toSeq.sorted.toList))
+      case r => r
+    }).map( jsonResponseToHttpResponse )
   }
 }
