@@ -14,6 +14,16 @@ import test_case_generator
 # Deprecated in 2.7 in favor of argparse but not yet removed.
 from optparse import OptionParser
 
+def load_test_cases(path):
+    """ load_test_cases: Read test cases from disk.
+    Each line contains exactly one test case, no extension.
+
+    path: Relative to the directory this script is living in
+    """
+
+    abspath = os.path.abspath(os.path.join(os.path.dirname(__file__), path))
+    return open(abspath).read().strip().split("\n")
+
 class Harness(test_framework.AbstractHarness):
     LEVEL = 3
     VERSION = 1
@@ -22,6 +32,8 @@ class Harness(test_framework.AbstractHarness):
         "level3-DwDiVpruSL",
         "level3-IIypI1AvuY"
     ]
+    DEFAULT_TEST_CASES = load_test_cases("../test_cases.txt")  # Screw initial test cases, load our own
+
     DICTIONARY_SHA1 = '6b898d7c48630be05b72b3ae07c5be6617f90d8e'
 
     def __init__(self, ids_or_urls=[], options={}):
